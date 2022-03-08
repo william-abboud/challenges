@@ -1,0 +1,3 @@
+use("challenges");
+
+db.users.insertMany();
