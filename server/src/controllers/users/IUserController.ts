@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 
 import {
   NewUserDetails,
@@ -8,9 +8,17 @@ import {
 } from "../../models/user/UserTypes";
 
 interface IUserController {
-  getSingle(req: Request<UserIdentity>, res: Response<UserDetails>): void;
-  register(req: Request<unknown, NewUserDetails>, res: Response<UserDetails>): void;
-  login(req: Request<unknown, UserLoginDetails>, res: Response<UserDetails>): void;
+  getSingle(req: Request<UserIdentity>, res: Response<UserDetails>, next: NextFunction): void;
+  register(
+    req: Request<unknown, unknown, NewUserDetails>,
+    res: Response<UserDetails>,
+    next: NextFunction,
+  ): void;
+  login(
+    req: Request<unknown, unknown, UserLoginDetails>,
+    res: Response<UserDetails>,
+    next: NextFunction,
+  ): void;
 }
 
 export default IUserController;
