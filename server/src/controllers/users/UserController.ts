@@ -1,11 +1,19 @@
 import { inject } from "inversify";
 import { controller, httpPost, httpGet } from "inversify-express-utils";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
+import { body, param } from "express-validator";
 
 import IUserController from "./IUserController";
 import { NewUserDetails, UserIdentity, UserLoginDetails } from "../../models/user/UserTypes";
 import Locator from "../../locator";
 import IUserService from "../../services/user/IUserService";
+import DuplicateUserError from "../../exceptions/DuplicateUserError";
+import validateApiArgs from "../../middlwares/apiValidationMiddleware";
+import HttpError from "../../exceptions/HttpError";
+import InvalidPasswordError from "../../exceptions/InvalidPasswordError";
+import UserDoesNotExistError from "../../exceptions/UserDoesNotExistError";
+import authMiddleware from "../../middlwares/authMiddleware";
+import { userIdValidator } from "../../utils/validators/userIdValidator";
 
 @controller("/users")
 class UserController implements IUserController {
@@ -15,63 +23,80 @@ class UserController implements IUserController {
     this.service = service;
   }
 
-  @httpPost("/register")
-  register(req: Request<unknown, NewUserDetails>, res: Response) {
+  @httpPost(
+    "/register",
+    body("email").isEmail().normalizeEmail(),
+    body("password").isString().trim().isLength({ min: 6, max: 50 }),
+    body("name").isString().trim().isAlpha(undefined, { ignore: " -" }),
+    validateApiArgs,
+  )
+  async register(
+    req: Request<unknown, unknown, NewUserDetails>,
+    res: Response,
+    next: NextFunction,
+  ) {
     const { email, password, name } = req.body;
 
-    return this.service
-      .registerUser({ email, password, name })
-      .then((newUser) => {
-        req.session.user = newUser;
+    try {
+      const newUser = await this.service.registerUser({ email, password, name });
 
-        res.send(newUser);
-      })
-      .catch((error) => {
-        if (error.message.includes("User already exists")) {
-          res.status(400).send({ message: "User already exists" });
-        } else {
-          res.status(500).send(error);
-        }
-      });
+      req.session.user = newUser;
+      res.send(newUser);
+    } catch (error: unknown) {
+      if (error instanceof DuplicateUserError) {
+        next(new HttpError(400, error.message, "DuplicateUserError"));
+      } else {
+        next(error);
+      }
+    }
   }
 
-  @httpPost("/login")
-  login(req: Request<unknown, UserLoginDetails>, res: Response) {
+  @httpPost(
+    "/login",
+    body("email").isEmail().normalizeEmail(),
+    body("password").isString().trim().isLength({ min: 6, max: 50 }),
+    validateApiArgs,
+  )
+  async login(req: Request<unknown, UserLoginDetails>, res: Response, next: NextFunction) {
     const { email, password } = req.body;
 
-    return this.service
-      .logUserIn({ email, password })
-      .then((user) => {
-        req.session.user = user;
+    try {
+      const user = await this.service.logUserIn({ email, password });
 
-        res.send(user);
-      })
-      .catch((error) => {
-        if (
-          error.message.includes("User does not exist") ||
-          error.message.includes("Invalid password")
-        ) {
-          res.status(400).send(error);
-        } else {
-          res.status(500).send(error);
-        }
-      });
+      req.session.user = user;
+      res.send(user);
+    } catch (error: unknown) {
+      if (error instanceof UserDoesNotExistError) {
+        next(new HttpError(400, error.message, "UserDoesNotExistError"));
+      } else if (error instanceof InvalidPasswordError) {
+        next(new HttpError(400, error.message, "InvalidPasswordError"));
+      } else {
+        next(error);
+      }
+    }
   }
 
-  @httpGet("/:id")
-  getSingle(req: Request<UserIdentity>, res: Response) {
+  @httpGet(
+    "/:id",
+    authMiddleware,
+    param("id").isMongoId(),
+    param("id").custom(userIdValidator),
+    validateApiArgs,
+  )
+  async getSingle(req: Request<UserIdentity>, res: Response, next: NextFunction) {
     const { id } = req.params;
 
-    return this.service
-      .getUser(id)
-      .then((user) => res.send(user))
-      .catch((error) => {
-        if (error.message.includes("User does not exist")) {
-          res.status(400).send(error);
-        } else {
-          res.status(500).send(error);
-        }
-      });
+    try {
+      const user = await this.service.getUser(id);
+
+      res.send(user);
+    } catch (error: unknown) {
+      if (error instanceof UserDoesNotExistError) {
+        next(new HttpError(400, error.message, "UserDoesNotExistError"));
+      } else {
+        next(error);
+      }
+    }
   }
 }
 
