@@ -7,7 +7,6 @@ import User from "./User";
 
 function extractUserDetails(user: IUser): UserDetails;
 function extractUserDetails(userDoc: IUserDocument): UserDetails;
-
 function extractUserDetails(user: IUser | IUserDocument): UserDetails {
   if (user instanceof User) {
     const usr = user.toObject<IUser>();
