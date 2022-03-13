@@ -25,7 +25,7 @@ class UserController implements IUserController {
 
   @httpPost(
     "/register",
-    body("email").isEmail().normalizeEmail(),
+    body("email").isEmail(),
     body("password").isString().trim().isLength({ min: 6, max: 50 }),
     body("name").isString().trim().isAlpha(undefined, { ignore: " -" }),
     validateApiArgs,
@@ -53,7 +53,7 @@ class UserController implements IUserController {
 
   @httpPost(
     "/login",
-    body("email").isEmail().normalizeEmail(),
+    body("email").isEmail(),
     body("password").isString().trim().isLength({ min: 6, max: 50 }),
     validateApiArgs,
   )
@@ -74,6 +74,17 @@ class UserController implements IUserController {
         next(error);
       }
     }
+  }
+
+  @httpPost("/logout", authMiddleware)
+  logout(req: Request<unknown>, res: Response, next: NextFunction) {
+    req.session.destroy((err) => {
+      if (err) {
+        next(err);
+      } else {
+        res.send({});
+      }
+    });
   }
 
   @httpGet(
