@@ -15,38 +15,40 @@ class UserRepository implements IUserRepository {
     this.model = model;
   }
 
-  registerUser(user: NewUserDetailsDBReady): Promise<UserDetails> {
-    return this.model.create(user).then(extractUserDetails);
+  async registerUser(user: NewUserDetailsDBReady): Promise<UserDetails> {
+    const newUser = await this.model.create(user);
+
+    return extractUserDetails(newUser);
   }
 
-  getSingle(userId: string): Promise<UserDetails | null> {
-    return this.model.findById(userId).then((usr) => {
-      if (!usr) {
-        return null;
-      }
+  async getSingle(userId: string): Promise<UserDetails | null> {
+    const user = await this.model.findById(userId);
 
-      return extractUserDetails(usr);
-    });
+    if (!user) {
+      return null;
+    }
+
+    return extractUserDetails(user);
   }
 
-  getSingleByEmail(email: string): Promise<UserDetails | null> {
-    return this.model.findOne({ email }).then((usr) => {
-      if (!usr) {
-        return null;
-      }
+  async getSingleByEmail(email: string): Promise<UserDetails | null> {
+    const user = await this.model.findOne({ email });
 
-      return extractUserDetails(usr);
-    });
+    if (!user) {
+      return null;
+    }
+
+    return extractUserDetails(user);
   }
 
-  getSingleByEmailUnsafe(email: string): Promise<IUser | null> {
-    return this.model.findOne({ email }).then((usr) => {
-      if (!usr) {
-        return null;
-      }
+  async getSingleByEmailUnsafe(email: string): Promise<IUser | null> {
+    const user = await this.model.findOne({ email });
 
-      return usr.toObject<IUser>();
-    });
+    if (!user) {
+      return null;
+    }
+
+    return user.toObject<IUser>();
   }
 }
 
