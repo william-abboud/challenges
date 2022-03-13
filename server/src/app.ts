@@ -44,7 +44,9 @@ server.setConfig((app) => {
       store,
     }),
   );
+});
 
+server.setErrorConfig((app) => {
   app.use(errorMiddleware);
 });
 
