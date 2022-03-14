@@ -5,6 +5,7 @@ interface IParticipant {
   userId: string;
   name: string;
   progresses: IProgress[];
+  challenges: string[];
 }
 
 export default IParticipant;

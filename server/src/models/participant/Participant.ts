@@ -18,6 +18,12 @@ const ParticipantSchema = new Schema<IParticipantDocument>({
     },
   },
   progresses: [ProgressSchema],
+  challenges: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Challenge",
+    },
+  ],
 });
 
 const Participant = model<IParticipantDocument>("Participant", ParticipantSchema);
