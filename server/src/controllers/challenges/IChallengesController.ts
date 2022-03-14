@@ -1,11 +1,19 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
+import IPaginationOptions from "../../interfaces/pagination/IPaginationOptions";
 
-import IPaginationParams from "../../interfaces/pagination/IPaginationParams";
 import IChallenge from "../../models/challenge/IChallenge";
 
 interface IChallengesController {
-  getAll(req: Request<unknown, unknown, unknown, IPaginationParams>, res: Response): void;
-  create(req: Request<unknown, unknown, IChallenge, unknown>, res: Response): void;
+  getAll(
+    req: Request<unknown, unknown, unknown, IPaginationOptions>,
+    res: Response,
+    next: NextFunction,
+  ): void;
+  create(
+    req: Request<unknown, unknown, IChallenge, unknown>,
+    res: Response,
+    next: NextFunction,
+  ): void;
 }
 
 export default IChallengesController;
