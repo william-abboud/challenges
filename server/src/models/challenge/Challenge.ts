@@ -22,6 +22,14 @@ const ChallengeSchema = new Schema<IChallengeDocument>({
       message: "There must be at least 1 rule and no more than 20 rules.",
     },
   },
+  awards: {
+    type: [String],
+    required: true,
+    validate: {
+      validator: (awards: string[]) => awards.length > 0 && awards.length <= 10,
+      message: "There must be at least 1 reward and no more than 10 awards.",
+    },
+  },
   startDate: {
     type: Date,
     required: true,
