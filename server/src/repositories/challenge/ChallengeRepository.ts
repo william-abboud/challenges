@@ -16,32 +16,41 @@ class ChallengeRepository implements IChallengeRepository {
     this.model = model;
   }
 
-  addParticipants(challengeId: string, participants: string[]): Promise<IChallenge | null> {
-    return this.model
-      .findByIdAndUpdate(challengeId, {
-        $push: { participants: { $each: participants } },
-      })
-      .then((doc) => (doc ? doc.toObject<IChallenge>() : null));
+  async addParticipants(challengeId: string, participants: string[]): Promise<IChallenge | null> {
+    const challenge = await this.model.findByIdAndUpdate(challengeId, {
+      $push: { participants: { $each: participants } },
+    });
+
+    if (!challenge) {
+      return null;
+    }
+
+    return challenge.toObject<IChallenge>();
   }
 
-  getChallenge(id: string): Promise<IFullChallenge | null> {
-    return this.model
-      .findById(id)
-      .populate("creator")
-      .populate("participants")
-      .then((doc) => (doc ? doc.toObject<IFullChallenge>() : null));
+  async getChallenge(id: string): Promise<IFullChallenge | null> {
+    const challenge = await this.model.findById(id).populate("owner").populate("participants");
+
+    if (!challenge) {
+      return null;
+    }
+
+    return challenge.toObject<IFullChallenge>();
   }
 
-  getAllChallenges({ page = 0, size = 25 }: IPaginationOptions): Promise<IChallenge[]> {
-    return this.model
+  async getAllChallenges({ page = 0, size = 25 }: IPaginationOptions): Promise<IChallenge[]> {
+    const docs = await this.model
       .find({})
       .skip(page * size)
-      .limit(size)
-      .then((docs) => docs.map((doc) => doc.toObject<IChallenge>()));
+      .limit(size);
+
+    return docs.map((doc) => doc.toObject<IChallenge>());
   }
 
-  create(challenge: ChallengeDetails): Promise<IChallenge> {
-    return this.model.create(challenge).then((doc) => doc.toObject<IChallenge>());
+  async create(challenge: ChallengeDetails): Promise<IChallenge> {
+    const createdChallenge = await this.model.create(challenge);
+
+    return createdChallenge.toObject<IChallenge>();
   }
 }
 
