@@ -15,10 +15,32 @@ class ParticipantRepository implements IParticipantRepository {
     this.model = model;
   }
 
-  createParticipant(participant: ParticipantDetails): Promise<IParticipant> {
-    return this.model
-      .create(participant)
-      .then((participant) => participant.toObject<IParticipant>());
+  async getParticipant(userId: string): Promise<IParticipant | null> {
+    const participant = await this.model.findOne({ userId });
+
+    return participant ? participant.toObject<IParticipant>() : null;
+  }
+
+  async getUserParticipantInChallenge(
+    challengeId: string,
+    userId: string,
+  ): Promise<IParticipant | null> {
+    const participant = await this.model.findOne({
+      userId,
+      challenges: {
+        $elemMatch: {
+          $in: [challengeId],
+        },
+      },
+    });
+
+    return participant ? participant.toObject<IParticipant>() : null;
+  }
+
+  async createParticipant(participant: ParticipantDetails): Promise<IParticipant> {
+    const createdParticipant = await this.model.create(participant);
+
+    return createdParticipant.toObject<IParticipant>();
   }
 }
 
