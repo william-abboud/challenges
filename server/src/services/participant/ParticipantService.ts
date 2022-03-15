@@ -9,6 +9,8 @@ import IParticipantRepository from "../../repositories/participant/IParticipantR
 import IParticipantService from "./IParticipantService";
 import IChallengeService from "../challenge/IChallengeService";
 import IUserService from "../user/IUserService";
+import UserDoesNotExistError from "../../exceptions/UserDoesNotExistError";
+import UserAlreadyParticipantInChallengeError from "../../exceptions/UserAlreadyParticipantInChallengeError";
 
 @injectable()
 class ParticipantSevice implements IParticipantService {
@@ -30,24 +32,41 @@ class ParticipantSevice implements IParticipantService {
     return this.repository.createParticipant(participant);
   }
 
-  participate(userId: IUser["id"], challengeId: IChallenge["id"]): Promise<IChallenge | null> {
-    return this.userService
-      .getUser(userId)
-      .then((user) => {
-        const { name } = user;
+  getParticipant(userId: IUser["id"]): Promise<IParticipant | null> {
+    return this.repository.getParticipant(userId);
+  }
 
-        const participantDetails: ParticipantDetails = {
-          name,
-          userId,
-          progresses: [],
-        };
+  async participate(
+    userId: IUser["id"],
+    challengeId: IChallenge["id"],
+  ): Promise<IChallenge | null> {
+    const user = await this.userService.getUser(userId);
 
-        return this.createParticipant(participantDetails);
-      })
-      .then((participant) => {
-        return this.challengeService.addParticipants(challengeId, [participant.id]);
-      })
-      .then((challenge) => challenge);
+    if (!user) {
+      throw new UserDoesNotExistError();
+    }
+
+    const participantInChallenge = await this.repository.getUserParticipantInChallenge(
+      challengeId,
+      userId,
+    );
+
+    if (participantInChallenge) {
+      throw new UserAlreadyParticipantInChallengeError();
+    }
+
+    const participantDetails: ParticipantDetails = {
+      name: user.name,
+      userId,
+      progresses: [],
+      challenges: [challengeId],
+    };
+
+    // TODO: Use transaction
+    const participant = await this.createParticipant(participantDetails);
+    const challenge = await this.challengeService.addParticipants(challengeId, [participant.id]);
+
+    return challenge;
   }
 }
 
