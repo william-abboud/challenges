@@ -1,4 +1,4 @@
-import ILog from "../logs/ILog";
+import ILog from "../log/ILog";
 import { ProgressStatus } from "./Progress.enums";
 
 interface IProgress {

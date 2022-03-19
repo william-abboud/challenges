@@ -1,6 +1,6 @@
 import { Schema } from "mongoose";
 
-import LogSchema from "../logs/Log";
+import LogSchema from "../log/LogSchema";
 import IProgressDocument from "./IProgressDocument";
 
 const ProgressSchema = new Schema<IProgressDocument>({
