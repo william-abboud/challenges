@@ -1,7 +1,7 @@
 import { inject } from "inversify";
 import { NextFunction, Request, Response } from "express";
 import { controller, httpGet, httpPost } from "inversify-express-utils";
-import { body, query } from "express-validator";
+import { body, query, param } from "express-validator";
 
 import Locator from "../../locator";
 import IPaginationOptions from "../../interfaces/pagination/IPaginationOptions";
@@ -11,6 +11,8 @@ import { ChallengeDetails } from "../../models/challenge/ChallengeTypes";
 import authMiddleware from "../../middlwares/authMiddleware";
 import IChallengeService from "../../services/challenge/IChallengeService";
 import validateApiArgs from "../../middlwares/apiValidationMiddleware";
+import ChallengeNotFoundError from "../../exceptions/ChallengeNotFoundError";
+import HttpError from "../../exceptions/HttpError";
 
 @controller("/challenges")
 class ChallengesController implements IChallengesController {
@@ -103,6 +105,36 @@ class ChallengesController implements IChallengesController {
       res.send(createdChallenge);
     } catch (error: unknown) {
       next(error);
+    }
+  }
+
+  @httpGet(
+    "/:id",
+    authMiddleware,
+    param("id").notEmpty().isMongoId(),
+    validateApiArgs,
+  )
+  async get(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    const { id } = req.params;
+
+    try {
+      const challenge = await this.service.getChallenge(id);
+
+      if (!challenge) {
+        throw new ChallengeNotFoundError(id);
+      }
+
+      res.send(challenge);
+    } catch (error: unknown) {
+      if (error instanceof ChallengeNotFoundError) {
+        next(new HttpError(404, error.message, "ChallengeNotFoundError"));
+      } else {
+        next(error);
+      }
     }
   }
 }
