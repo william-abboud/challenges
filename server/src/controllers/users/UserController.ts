@@ -77,14 +77,21 @@ class UserController implements IUserController {
   }
 
   @httpPost("/logout", authMiddleware)
-  logout(req: Request<unknown>, res: Response, next: NextFunction) {
-    req.session.destroy((err) => {
-      if (err) {
-        next(err);
-      } else {
-        res.send({});
-      }
-    });
+  logout(req: Request, res: Response, next: NextFunction) {
+    return new Promise<void>((resolve, reject) => {
+      req.session.destroy(err => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    })
+    .then(() => {
+      res.clearCookie("connect.sid");
+      res.send({});
+    })
+    .catch(next);
   }
 
   @httpGet(
