@@ -2,10 +2,11 @@ import { NextFunction, Request, Response } from "express";
 import { param } from "express-validator";
 import { inject } from "inversify";
 import { controller, httpPut } from "inversify-express-utils";
+
+import ChallengeNotFoundError from "../../exceptions/ChallengeNotFoundError";
 import HttpError from "../../exceptions/HttpError";
 import UserAlreadyParticipantInChallengeError from "../../exceptions/UserAlreadyParticipantInChallengeError";
 import UserDoesNotExistError from "../../exceptions/UserDoesNotExistError";
-
 import Locator from "../../locator";
 import validateApiArgs from "../../middlwares/apiValidationMiddleware";
 import authMiddleware from "../../middlwares/authMiddleware";
@@ -40,6 +41,8 @@ class ParticipantsController implements IParticipantsController {
         return next(new HttpError(404, err.message, "UserDoesNotExistError"));
       } else if (err instanceof UserAlreadyParticipantInChallengeError) {
         return next(new HttpError(409, err.message, "UserAlreadyParticipantInChallengeError"));
+      } else if (err instanceof ChallengeNotFoundError) {
+        return next(new HttpError(404, err.message, "ChallengeNotFoundError"));
       } else {
         next(err);
       }
