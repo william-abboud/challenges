@@ -11,9 +11,12 @@ import IChallengeService from "../challenge/IChallengeService";
 import IUserService from "../user/IUserService";
 import UserDoesNotExistError from "../../exceptions/UserDoesNotExistError";
 import UserAlreadyParticipantInChallengeError from "../../exceptions/UserAlreadyParticipantInChallengeError";
+import ProgressStatus from "../../enums/ProgressStatus";
+import IProgress from "../../models/progress/IProgress";
+import ChallengeNotFoundError from '../../exceptions/ChallengeNotFoundError';
 
 @injectable()
-class ParticipantSevice implements IParticipantService {
+class ParticipantService implements IParticipantService {
   private repository: IParticipantRepository;
   private challengeService: IChallengeService;
   private userService: IUserService;
@@ -55,12 +58,23 @@ class ParticipantSevice implements IParticipantService {
       throw new UserAlreadyParticipantInChallengeError();
     }
 
-    const participantDetails: ParticipantDetails = {
-      name: user.name,
-      userId,
-      progresses: [],
-      challenges: [challengeId],
+    const progress: IProgress = {
+      challengeId,
+      status: ProgressStatus.NOT_STARTED,
+      logs: [],
     };
+
+    const participantDetails: ParticipantDetails = {
+      userId,
+      name: user.name,
+      progresses: [progress],
+    };
+
+    const existingChallenge = await this.challengeService.getChallenge(challengeId);
+
+    if (!existingChallenge) {
+      throw new ChallengeNotFoundError(challengeId);
+    }
 
     // TODO: Use transaction
     const participant = await this.createParticipant(participantDetails);
@@ -70,4 +84,4 @@ class ParticipantSevice implements IParticipantService {
   }
 }
 
-export default ParticipantSevice;
+export default ParticipantService;

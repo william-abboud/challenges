@@ -27,11 +27,11 @@ class ParticipantRepository implements IParticipantRepository {
   ): Promise<IParticipant | null> {
     const participant = await this.model.findOne({
       userId,
-      challenges: {
+      progresses: {
         $elemMatch: {
-          $in: [challengeId],
+          challengeId,
         },
-      },
+      }
     });
 
     return participant ? participant.toObject<IParticipant>() : null;

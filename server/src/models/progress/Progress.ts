@@ -8,6 +8,7 @@ const ProgressSchema = new Schema<IProgressDocument>({
     type: Schema.Types.ObjectId,
     ref: "Challenge",
     required: true,
+    index: true,
   },
   status: {
     type: String,
