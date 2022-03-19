@@ -7,6 +7,9 @@ import Challenge from "../../models/challenge/Challenge";
 import { ChallengeDetails } from "../../models/challenge/ChallengeTypes";
 import IFullChallenge from "../../models/challenge/IFullChallenge";
 import Locator from "../../locator";
+import ChallengeNotFoundError from "../../exceptions/ChallengeNotFoundError";
+import { extractUserSafeDetails } from "../../models/user/userUtils";
+import IUser from '../../models/user/IUser';
 
 @injectable()
 class ChallengeRepository implements IChallengeRepository {
@@ -16,26 +19,35 @@ class ChallengeRepository implements IChallengeRepository {
     this.model = model;
   }
 
-  async addParticipants(challengeId: string, participants: string[]): Promise<IChallenge | null> {
+  async addParticipants(challengeId: string, participants: string[]): Promise<IChallenge> {
     const challenge = await this.model.findByIdAndUpdate(challengeId, {
       $push: { participants: { $each: participants } },
-    });
+    }, { new: true });
 
     if (!challenge) {
-      return null;
+      throw new ChallengeNotFoundError(challengeId);
     }
 
     return challenge.toObject<IChallenge>();
   }
 
   async getChallenge(id: string): Promise<IFullChallenge | null> {
-    const challenge = await this.model.findById(id).populate("owner").populate("participants");
+    const challengeDoc = await this.model.findById(id).populate("owner").populate("participants").exec();
 
-    if (!challenge) {
+    if (!challengeDoc) {
       return null;
     }
 
-    return challenge.toObject<IFullChallenge>();
+    type FullChallengeWithUnsafeOwner = Omit<IFullChallenge, "owner"> & { owner: IUser };
+
+    const challenge = challengeDoc.toObject<FullChallengeWithUnsafeOwner>();
+
+    const challengeWithSafeOwner = {
+      ...challenge,
+      owner: extractUserSafeDetails(challenge.owner),
+    };
+
+    return challengeWithSafeOwner;
   }
 
   async getAllChallenges({ page = 0, size = 25 }: IPaginationOptions): Promise<IChallenge[]> {

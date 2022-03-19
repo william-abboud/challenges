@@ -7,7 +7,7 @@ interface IChallengeRepository {
   getAllChallenges(paginationOptions: IPaginationOptions): Promise<IChallenge[]>;
   create(challenge: ChallengeDetails): Promise<IChallenge>;
   getChallenge(id: string): Promise<IFullChallenge | null>;
-  addParticipants(challengeId: string, participants: string[]): Promise<IChallenge | null>;
+  addParticipants(challengeId: string, participants: string[]): Promise<IChallenge>;
 }
 
 export default IChallengeRepository;
