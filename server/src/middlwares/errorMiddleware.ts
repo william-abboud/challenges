@@ -10,6 +10,7 @@ const errorMiddleware = (
   if (error instanceof HttpError) {
     res.status(error.status).send({ message: error.message, type: error.type });
   } else if (error instanceof Error) {
+    console.log(error.message);
     res.status(500).send({ message: "Something went wrong!", type: "UnknownError" });
   } else {
     next();
