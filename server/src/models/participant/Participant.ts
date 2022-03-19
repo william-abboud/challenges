@@ -8,6 +8,7 @@ const ParticipantSchema = new Schema<IParticipantDocument>({
   userId: {
     type: Schema.Types.ObjectId,
     ref: "User",
+    index: true,
   },
   name: {
     type: String,
@@ -18,12 +19,6 @@ const ParticipantSchema = new Schema<IParticipantDocument>({
     },
   },
   progresses: [ProgressSchema],
-  challenges: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "Challenge",
-    },
-  ],
 });
 
 const Participant = model<IParticipantDocument>("Participant", ParticipantSchema);

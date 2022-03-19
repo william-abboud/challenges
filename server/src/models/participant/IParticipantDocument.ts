@@ -6,7 +6,6 @@ interface IParticipantDocument
   extends Document,
     Omit<IParticipant, "id" | "userId" | "challenges"> {
   userId: ObjectId;
-  challenges: ObjectId[];
 }
 
 export default IParticipantDocument;
