@@ -14,6 +14,7 @@ import UserAlreadyParticipantInChallengeError from "../../exceptions/UserAlready
 import ProgressStatus from "../../enums/ProgressStatus";
 import IProgress from "../../models/progress/IProgress";
 import ChallengeNotFoundError from '../../exceptions/ChallengeNotFoundError';
+import IPaginationOptions from "../../interfaces/pagination/IPaginationOptions";
 
 @injectable()
 class ParticipantService implements IParticipantService {
@@ -30,6 +31,9 @@ class ParticipantService implements IParticipantService {
     this.challengeService = challengeService;
     this.userService = userService;
   }
+  getPaginatedParticipants(paginationOptions: IPaginationOptions): Promise<IParticipant[]> {
+    return this.repository.getPaginatedParticipants(paginationOptions);
+  }
 
   createParticipant(participant: ParticipantDetails): Promise<IParticipant> {
     return this.repository.createParticipant(participant);
@@ -37,6 +41,10 @@ class ParticipantService implements IParticipantService {
 
   getParticipant(userId: IUser["id"]): Promise<IParticipant | null> {
     return this.repository.getParticipant(userId);
+  }
+
+  addProgress(participantId: string, progress: IProgress): Promise<IParticipant | null> {
+    return this.repository.addProgress(participantId, progress);
   }
 
   async participate(
@@ -58,29 +66,42 @@ class ParticipantService implements IParticipantService {
       throw new UserAlreadyParticipantInChallengeError();
     }
 
+    const existingParticipant = await this.repository.getParticipant(userId);
+
     const progress: IProgress = {
       challengeId,
       status: ProgressStatus.NOT_STARTED,
       logs: [],
     };
-
-    const participantDetails: ParticipantDetails = {
-      userId,
-      name: user.name,
-      progresses: [progress],
-    };
-
+    
     const existingChallenge = await this.challengeService.getChallenge(challengeId);
-
+    
     if (!existingChallenge) {
       throw new ChallengeNotFoundError(challengeId);
     }
+    
+    if (!existingParticipant) {
+      const participantDetails: ParticipantDetails = {
+        userId,
+        name: user.name,
+        progresses: [progress],
+      };
 
-    // TODO: Use transaction
-    const participant = await this.createParticipant(participantDetails);
-    const challenge = await this.challengeService.addParticipants(challengeId, [participant.id]);
+      // TODO: Use transaction
+      const participant = await this.createParticipant(participantDetails);
+      const challenge = await this.challengeService.addParticipants(challengeId, [participant.id]);
 
-    return challenge;
+      return challenge;
+    } else {
+      await this.addProgress(existingParticipant.id, progress);
+      const challenge = await this.challengeService.addParticipants(challengeId, [existingParticipant.id]);
+      
+      return challenge;
+    }
+  }
+
+  async startProgress(challengeId: string, participantId: string): Promise<IParticipant> {
+    return this.repository.updateProgressStatus(participantId, challengeId, ProgressStatus.IN_PROGRESS);
   }
 }
 
