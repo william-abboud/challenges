@@ -50,6 +50,16 @@ class ChallengeRepository implements IChallengeRepository {
     return challengeWithSafeOwner;
   }
 
+  async getChallengeSummary(id: string): Promise<IChallenge | null> {
+    const challengeDoc = await this.model.findById(id);
+
+    if (!challengeDoc) {
+      return null;
+    }
+
+    return challengeDoc.toObject<IChallenge>();
+  }
+
   async getAllChallenges({ page = 0, size = 25 }: IPaginationOptions): Promise<IChallenge[]> {
     const docs = await this.model
       .find({})
