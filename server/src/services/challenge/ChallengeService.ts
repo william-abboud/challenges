@@ -25,6 +25,10 @@ class ChallengeService implements IChallengeService {
     return this.repository.getChallenge(id);
   }
 
+  getChallengeSummary(id: string): Promise<IChallenge | null> {
+    return this.repository.getChallengeSummary(id);
+  }
+
   getPaginatedChallenges(paginationOptions: IPaginationOptions): Promise<ChallengeDetails[]> {
     return this.repository.getAllChallenges(paginationOptions);
   }

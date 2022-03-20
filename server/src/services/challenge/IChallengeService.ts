@@ -5,6 +5,7 @@ import IFullChallenge from "../../models/challenge/IFullChallenge";
 
 interface IChallengeService {
   getChallenge(id: string): Promise<IFullChallenge | null>;
+  getChallengeSummary(id: string): Promise<IChallenge | null>;
   getPaginatedChallenges(paginationOptions: IPaginationOptions): Promise<ChallengeDetails[]>;
   createChallenge(challenge: ChallengeDetails): Promise<IChallenge>;
   addParticipants(challengeId: string, participants: string[]): Promise<IChallenge | null>;
